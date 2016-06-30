@@ -7,7 +7,7 @@
 #include <ESPAsyncWebServer.h>
 #include <SoftwareSerial.h>
 //#include <GDBStub.h>
-#include "WifiSetup.h"
+#include "WiFiSetup.h"
 #include "AsyncServerSideEvent.h"
 #include "HttpUpdateHandler.h"
 #include "BrewManiacProxy.h"
