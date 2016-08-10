@@ -101,11 +101,12 @@ Idle:"Idle",
 ManualMode:"Manual Mode",
 Setting:"Setting",
 min:"min",
+Mash:"Mash Step",
 Connected:"Connected",
 ConnectionError:"Connection Error",
 StartBrew:"Brewing started.",
 BoilEnd:"Boil Finished",
-stageName:["Mash In","Phytase","Gluconase","Protease","&beta;-Amylase","&alpha;-Amylase1","&alpha;-Amylase2","Mash Out","Boiling","Cooling","Whirlpool"],
+stageName:["Mash In","Mash Step(1)","Mash Step(2)","Mash Step(3)","Mash Step(4)","Mash Step(5)","Mash Step(6)","Mash Out","Boiling","Cooling","Whirlpool"],
 event:["","Temperature Reached",
 				"Add Malt",	
 				"Remove Malt",	
@@ -150,7 +151,8 @@ var ButtonLabels={
 24:{u:"",d:"Down",s:"Quit",e:"Ok",i:""},
 25:{u:"UP",d:"",s:"Quit",e:"Ok",i:""},
 26:{u:"UP",d:"Down",s:"Pause",e:"Pump",i:""},
-27:{u:"UP",d:"Down",s:"RUN",e:"Pump",i:""}};
+27:{u:"UP",d:"Down",s:"RUN",e:"Pump",i:""},
+28:{u:"UP",d:"Down",s:"Done",e:"More",i:""}};
 
 $(function(){
 	$(".fn").hide();
@@ -275,15 +277,9 @@ $(function(){
 <button id="editauto" class="editbtn">Edit</button>
 <button id="saveauto" class="editbtn">Save</button>
 <table id="auto_table">
-<tr><td colspan="3"  class="setting-category">Mash Schedule</td></tr>
+<tr><td colspan="3"  class="setting-category">Mash Schedule <button id="addrest" class="editbtn">Add Mash Rest</button></td></tr>
 <tr><th> Rest</th><th>Temperature</th><th>Time</th></tr>
 <tr><td> Mash In </td><td><span id="s0_tp">-</span><span class="tmp_unit">°C</span></td><td>-</td></tr>
-<tr><td> Phytase </td><td><span id="s1_tp">-</span> <span class="tmp_unit">°C</span></td><td><span id="s1_tm">-</span> min</td></tr>
-<tr><td> Glucanase </td><td><span id="s2_tp">-</span><span class="tmp_unit">°C</span></td><td> <span id="s2_tm">-</span> min</td></tr>
-<tr><td> Protease </td><td><span id="s3_tp">-</span><span class="tmp_unit">°C</span></td><td> <span id="s3_tm">-</span> min</td></tr>
-<tr><td> &beta;Amylase </td><td><span id="s4_tp">-</span><span class="tmp_unit">°C</span> </td><td><span id="s4_tm">-</span> min</td></tr>
-<tr><td>&alpha;Amylase1 </td><td><span id="s5_tp">-</span><span class="tmp_unit">°C</span></td><td><span id="s5_tm">-</span> min</td></tr>
-<tr><td>&alpha;Amylase2 </td><td><span id="s6_tp">-</span><span class="tmp_unit">°C</span></td><td><span id="s6_tm">-</span> min</td></tr>
 <tr><td> Mash Out </td><td><span id="s7_tp">-</span><span class="tmp_unit">°C</span></td><td><span id="s7_tm">-</span> min</td></tr>
 <tr>
 <tr><td colspan="3"  class="setting-category">Boil & Hop <button id="addhop" class="editbtn">Add Hop</button></td></tr>
