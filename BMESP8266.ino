@@ -6,9 +6,16 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SoftwareSerial.h>
+#include <ArduinoJson.h>
 //#include <GDBStub.h>
 #include "WiFiSetup.h"
+
+#define UseWebSocket true
+
+#if UseWebSocket != true
 #include "AsyncServerSideEvent.h"
+#endif
+
 #include "HttpUpdateHandler.h"
 #include "BrewManiacProxy.h"
 #include "BrewManiacWeb.h"
@@ -20,6 +27,7 @@
 /* End of Configuration 																	  */
 /**************************************************************************************/
 
+#define WS_PATH "/ws"
 
 const char* host = HOSTNAME;
 
@@ -30,8 +38,10 @@ const char* host = HOSTNAME;
 
 #if SerialDebug == true
 #define DebugOut(a) DebugPort.print(a)
+#define DBG_PRINTF(...) DebugPort.printf(__VA_ARGS__)
 #else
 #define DebugOut(a) 
+#define DBG_PRINTF(...)
 #endif
 
 #if UseSoftwareSerial == true
@@ -42,7 +52,13 @@ SoftwareSerial wiSerial(SW_RX_PIN,SW_TX_PIN);
 
 AsyncWebServer server(80);
 BrewManiacWeb bmWeb([](uint8_t ch){wiSerial.write(ch);});
+
+#if UseWebSocket == true
+AsyncWebSocket ws(WS_PATH);
+
+#else
 AsyncServerSideEventServer sse("/status.php");
+#endif
 
 typedef union _address{
                 uint8_t bytes[4];  // IPv4 address
@@ -107,6 +123,82 @@ public:
 };
 BmwHandler bmwHandler;
 
+#if UseWebSocket == true
+
+void processRemoteCommand( uint8_t *data, size_t len)
+{
+	StaticJsonBuffer<128> jsonBuffer;
+	char buf[128];
+	int i;
+	for(i=0;i< len && i<127;i++){
+		buf[i]=data[i];
+	}
+	buf[i]='\0';
+	JsonObject& root = jsonBuffer.parseObject(buf);
+
+	if (root.success() && root.containsKey("btn") ){
+		int code = root["btn"];
+		bmWeb.sendButton(code & 0xF, (code & 0xF0)!=0);
+	}
+}
+
+void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
+{
+	if(type == WS_EVT_CONNECT){
+    	DBG_PRINTF("ws[%s][%u] connect\n", server->url(), client->id());
+		String json;
+		bmWeb.getCurrentStatus(json);
+		client->text(json);
+  	} else if(type == WS_EVT_DISCONNECT){
+    	DBG_PRINTF("ws[%s][%u] disconnect: %u\n", server->url(), client->id());
+  	} else if(type == WS_EVT_ERROR){
+    	DBG_PRINTF("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
+  	} else if(type == WS_EVT_PONG){
+    	DBG_PRINTF("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
+  	} else if(type == WS_EVT_DATA){
+    	AwsFrameInfo * info = (AwsFrameInfo*)arg;
+    	String msg = "";
+    	if(info->final && info->index == 0 && info->len == len){
+      		//the whole message is in a single frame and we got all of it's data
+      		DBG_PRINTF("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
+			processRemoteCommand(data,info->len);
+
+		} else {
+      		//message is comprised of multiple frames or the frame is split into multiple packets
+#if 0  // for current application, the data should not be segmented  
+      		if(info->index == 0){
+        		if(info->num == 0)
+          		DBG_PRINTF("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
+        		DBG_PRINTF("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
+      		}
+
+      		DBG_PRINTF("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
+
+	        for(size_t i=0; i < info->len; i++) {
+    	    	//msg += (char) data[i];
+        	}
+		
+      		//DBG_PRINTF("%s\n",msg.c_str());
+
+			if((info->index + len) == info->len){
+				DBG_PRINTF("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
+        		if(info->final){
+        			DBG_PRINTF("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
+        		}
+      		}
+#endif
+      	}
+    }
+}
+void broadcastMessage(String msg)
+{
+	ws.textAll(msg);
+}
+void broadcastMessage(const char* msg)
+{
+	ws.textAll(msg);
+}
+#else // #if UseWebSocket == true
 
 uint8_t clientCount;
 void sseEventHandler(AsyncServerSideEventServer * server, AsyncServerSideEventClient * client, SseEventType type)
@@ -131,6 +223,18 @@ void sseEventHandler(AsyncServerSideEventServer * server, AsyncServerSideEventCl
 	}
 }
 
+void broadcastMessage(String msg)
+{
+	sse.broadcastData(msg);
+}
+
+void broadcastMessage(const char* msg)
+{
+	sse.broadcastData(msg);
+}
+
+#endif //#if UseWebSocket == true
+
 void bmwEventHandler(BrewManiacWeb* bmw, BmwEventType event)
 {
 	if(event==BmwEventTargetConnected){
@@ -139,27 +243,27 @@ void bmwEventHandler(BrewManiacWeb* bmw, BmwEventType event)
 		bmWeb.setIp(ip.bytes);
 	}else if(event==BmwEventAutomationChanged){
 		// request reload automation
-		sse.broadcastData("{\"update\":\"recipe\"}");
+		broadcastMessage("{\"update\":\"recipe\"}");
 	}else if(event==BmwEventSettingChanged){
 		// request reload setting
-		sse.broadcastData("{\"update\":\"setting\"}");
+		broadcastMessage("{\"update\":\"setting\"}");
 	}else if(event==BmwEventStatusUpdate || event==BmwEventTargetDisconnected || event==BmwEventButtonLabel){
 		String json;
 		bmw->getCurrentStatus(json);
-		sse.broadcastData(json);
+		broadcastMessage(json);
 	}else if(event==BmwEventBrewEvent){
 		String json;
 		bmw->getLastEvent(json);
-		sse.broadcastData(json);
+		broadcastMessage(json);
 	}else if(event==BmwEventPwmChanged){
 		String json;
 		bmw->getSettingPwm(json);
-		sse.broadcastData(json);
+		broadcastMessage(json);
 
 	}else if(event==BmwEventSettingTemperatureChanged){
 		String json;
 		bmw->getSettingTemperature(json);
-		sse.broadcastData(json);
+		broadcastMessage(json);
 	}
 }
 
@@ -203,7 +307,7 @@ bool testSPIFFS(void)
 void setup(void){
 	_wifiState=WiFiStateConnected;
 	
-	wiSerial.begin(38400);
+	wiSerial.begin(BAUDRATE);
 	
 	#if SerialDebug == true
   	DebugPort.begin(115200);
@@ -265,8 +369,14 @@ void setup(void){
 
 		//3.2 Normal serving pages 
 		//3.2.1 status report through SSE
+#if UseWebSocket == true
+	ws.onEvent(onWsEvent);
+  	server.addHandler(&ws);
+#else
 		sse.onEvent(sseEventHandler);
 		server.addHandler(&sse);
+#endif 
+
 	
 		server.addHandler(&bmwHandler);
 		//3.2.2 SPIFFS is part of the serving pages

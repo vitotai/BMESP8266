@@ -55,7 +55,7 @@
 /*  Don't touch them if you don't know what they are.								  */
 /**************************************************************************************/
 
-#define BME8266_VERSION "0.8"
+#define BME8266_VERSION "0.9"
 
 #define FIRMWARE_UPDATE_URL "http://brew.vito.tw/bmeupdate.php?info"
 #define JS_UPDATE_URL  "http://brew.vito.tw/bmejsupdate.php?v="
@@ -64,7 +64,11 @@
 #define REPORT_PERIOD 6
 // the time to reconnect to Arduino when disconnected.
 #define RECONNECT_TIME 12000
-
+#if UseSoftwareSerial == true
+#define BAUDRATE 38400
+#else
+#define BAUDRATE 115200
+#endif
 
 #endif
 
