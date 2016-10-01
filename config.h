@@ -55,7 +55,7 @@
 /*  Don't touch them if you don't know what they are.								  */
 /**************************************************************************************/
 
-#define BME8266_VERSION "0.9"
+#define BME8266_VERSION "0.9.2"
 
 #define FIRMWARE_UPDATE_URL "http://brew.vito.tw/bmeupdate.php?info"
 #define JS_UPDATE_URL  "http://brew.vito.tw/bmejsupdate.php?v="
@@ -69,6 +69,11 @@
 #else
 #define BAUDRATE 115200
 #endif
+
+
+#define UseWebSocket false
+#define UseServerSideEvent true
+
 
 #endif
 

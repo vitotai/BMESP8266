@@ -9,13 +9,6 @@
 #include <ArduinoJson.h>
 //#include <GDBStub.h>
 #include "WiFiSetup.h"
-
-#define UseWebSocket true
-
-#if UseWebSocket != true
-#include "AsyncServerSideEvent.h"
-#endif
-
 #include "HttpUpdateHandler.h"
 #include "BrewManiacProxy.h"
 #include "BrewManiacWeb.h"
@@ -53,12 +46,7 @@ SoftwareSerial wiSerial(SW_RX_PIN,SW_TX_PIN);
 AsyncWebServer server(80);
 BrewManiacWeb bmWeb([](uint8_t ch){wiSerial.write(ch);});
 
-#if UseWebSocket == true
-AsyncWebSocket ws(WS_PATH);
 
-#else
-AsyncServerSideEventServer sse("/status.php");
-#endif
 
 typedef union _address{
                 uint8_t bytes[4];  // IPv4 address
@@ -124,6 +112,7 @@ public:
 BmwHandler bmwHandler;
 
 #if UseWebSocket == true
+AsyncWebSocket ws(WS_PATH);
 
 void processRemoteCommand( uint8_t *data, size_t len)
 {
@@ -190,65 +179,54 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       	}
     }
 }
-void broadcastMessage(String msg)
-{
-	ws.textAll(msg);
-}
-void broadcastMessage(const char* msg)
-{
-	ws.textAll(msg);
-}
-#else // #if UseWebSocket == true
 
-uint8_t clientCount;
-void sseEventHandler(AsyncServerSideEventServer * server, AsyncServerSideEventClient * client, SseEventType type)
-{
-//	DebugOut("eventHandler type:\n");
-//	DebugOut(type);
-	
-	if(type ==SseEventConnected){
-		clientCount ++;
-		DebugOut("New connection, current client number:");
-		DebugOut(clientCount);
+#endif // #if UseWebSocket == true
 
-		String json;
-		
-		bmWeb.getCurrentStatus(json,true);
-		client->sendData(json);
-		
-	}else if (type ==SseEventDisconnected){
-		clientCount --;
-		DebugOut("Disconnected, current client number:");
-		DebugOut(clientCount);
-	}
+
+#if UseServerSideEvent == true
+AsyncEventSource sse("/status.php");
+
+void sseConnect(AsyncEventSourceClient *client){
+	String json;
+	bmWeb.getCurrentStatus(json,true);
+	client->send(json.c_str());
 }
+
+#endif
+
 
 void broadcastMessage(String msg)
 {
-	sse.broadcastData(msg);
-}
+#if UseWebSocket == true
+	ws.textAll(msg);
+#endif
 
+#if UseServerSideEvent == true
+	sse.send(msg.c_str());
+#endif
+}
 void broadcastMessage(const char* msg)
 {
-	sse.broadcastData(msg);
-}
+#if UseWebSocket == true
+	ws.textAll(msg);
+#endif
 
-#endif //#if UseWebSocket == true
+#if UseServerSideEvent == true
+	sse.send(msg);
+#endif
+}
 
 void bmwEventHandler(BrewManiacWeb* bmw, BmwEventType event)
 {
-	if(event==BmwEventTargetConnected){
-		IPV4Address ip;
-		ip.dword = WiFi.localIP();
-		bmWeb.setIp(ip.bytes);
-	}else if(event==BmwEventAutomationChanged){
+	if(event==BmwEventAutomationChanged){
 		// request reload automation
 		broadcastMessage("{\"update\":\"recipe\"}");
 	}else if(event==BmwEventSettingChanged){
 		// request reload setting
 		broadcastMessage("{\"update\":\"setting\"}");
-	}else if(event==BmwEventStatusUpdate || event==BmwEventTargetDisconnected || event==BmwEventButtonLabel){
+	}else if(event==BmwEventStatusUpdate || event==BmwEventButtonLabel){
 		String json;
+		if( event==BmwEventButtonLabel) DebugOut("Buttons\n");
 		bmw->getCurrentStatus(json);
 		broadcastMessage(json);
 	}else if(event==BmwEventBrewEvent){
@@ -372,11 +350,12 @@ void setup(void){
 #if UseWebSocket == true
 	ws.onEvent(onWsEvent);
   	server.addHandler(&ws);
-#else
-		sse.onEvent(sseEventHandler);
-		server.addHandler(&sse);
-#endif 
+#endif
 
+#if	UseServerSideEvent == true
+  	sse.onConnect(sseConnect);
+  	server.addHandler(&sse);
+#endif 
 	
 		server.addHandler(&bmwHandler);
 		//3.2.2 SPIFFS is part of the serving pages
@@ -400,7 +379,7 @@ void setup(void){
 	
 	//4. start Web server
 	server.begin();
-	DebugOut("HTTP server started");
+	DebugOut("HTTP server started\n");
 
 	MDNS.addService("http", "tcp", 80);
 	
