@@ -1,334 +1,181 @@
 <!doctype html>
-<html lang="us">
+<html lang=en>
 <head>
-	<meta charset="utf-8"  name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">	
-
-	<title>BrewManiac</title>
-	<link rel="stylesheet" href="lib.css">
-	<script type="text/javascript" src="lib.js"></script>
-	
-	<script type="text/javascript" src="bm.js"></script>
-
-	<style>
-	body {text-align:center;}
-	.navicon-line {
-    width: 24px;
-    height: 4px;
-    border-radius: 1px;
-    margin-bottom: 3px;
-    background-color: #FFFFFF;}
-    .top-bar-block {display: inline-block;}
-    #menubar {position:absolute; left:10px;}
-	#menu .ui-selecting { background: #FECA40; }
-    #menu .ui-selected { background: #F39814; color: white; }
-    #menu { list-style-type: none; margin: 0; padding: 0; width: 100%; }
-    #menu li { margin: 3px; padding: 0.4em; font-size: 1em; height: 18px; }
-	#menupane {width:120px;}
-	/*.tp {text-align:left; vertical-align: text-top;}*/
-	.setting-category{ text-align:center; font-weight:bold; font-size: 1.2em; background-color:yellow;}
-  	#status-p,#settings-p,#automation-p,#about-p,#top-bar {margin: auto; padding:10px; width:100%}
-  	#about-p {text-align:left;}
-  	#top-bar {background-color:#33cccc;}
-  	ul {text-align:left;}
-    .tmp_unit { font-family: Tahoma, Geneva, sans-serif;}
-	/*#ctemp { color: white;}*/
-	#stemp { color: blue; font-size:24px; font-weight:bold;}
-	#stime { color: #990000; font-size:24px; font-weight:bold;}
-	table {border-collapse: collapse;}
-  	table,tr,td,th { margin:auto; border: 1px solid black;}
-  	#tbstatus,#tbstatus tr, #tbstatus td{ border: 0px;}
-  	#auto-t tr,#auto-t td,#auto-t th {border:0px; font-weight:bold}
-  	#auto-p td {text-align:left;}
-	.running {font-size:1.2em; color:red; background-color:yellow;}
-	.run {color:#DDDDDD; font-weight:normal;}
-	.section {font-size:18px; font-weight: bold;}
-	.editbtn { height:20px;}
-	#info { font-size: 1.5em; font-weight:bold; color:red;}
-	
-	#bmicon {position:relative; display:block; width:300px; height:300px; overflow: hidden;}
-	
-	.bmicons {position:absolute; left:0px; top:0px; width:900px; height:1200px;}	
-	#bmbase { z-index:5;  margin-left: 0px; margin-top:0px;}
-	#malt {z-index:0; margin-left:0px; margin-top:-900px;}
-	#heater_inact {z-index:10; margin-left:-300px; margin-top:0px;}
-	#pump_inact { z-index:10; margin-left:-600px; margin-top:0px;}
-	#pumprun { z-index:9; margin-left:0px; margin-top:-300px;}
-	#heating { z-index:10; margin-left:0px; margin-top:-600px;}
-	#settingstate { z-index:110; margin-left:-300px; margin-top:-900px;}
-	#errorstate { z-index:110; margin-left:-600px; margin-top:-900px;}
-
-	#TTT {color:white; position:absolute;  z-index: 100; width:160px; height:48px; left:32px; top:88px; font-size:36px; text-align:center; font-family:Arial, Helvetica, sans-serif; }
-	#srmc {text-align:center;};
-	
-	button#showbtn {width: 20px; height: 20px; border: 0px;}
-    #bpannel table,#bpannel tr,#bpannel td {border:0px;}
-	td.btntd {width:25%;}
-.round-button-circle {
-	width: 68px;
-	height:0;
-	padding-bottom: 68px;
-    border-radius: 50%;
-	border:2px solid black;
-    overflow:hidden;    
-    background: #AA2222; 
-}
-
-a.round-button {
-	width:68px;
-	height:68px;
-	display: table-cell; 
-	text-align:center;
-	vertical-align:middle;
-	color:#CCCCCC;
-    font-weight:bold;
-    text-decoration:none;
-}	
-a {
-  -webkit-user-select: none; /* disable selection/Copy of UIWebView */
-  -webkit-touch-callout: none; /* disable the IOS popup when long-press on a link */
-}
-	</style>
-<script>
-// strings, for localization
-var STR={
-AddMalt:"Add Malt",
-RemoveMalt:"Remove Malt",
-Boil:"Boil",
-HopN:"Hop#",
-Cooling:"Cooling",
-Automation:"Automation",
-Idle:"Idle",
-ManualMode:"Manual Mode",
-Setting:"Setting",
-min:"min",
-Mash:"Mash Step",
-Connected:"Connected",
-ConnectionError:"Connection Error",
-StartBrew:"Brewing started.",
-BoilEnd:"Boil Finished",
-stageName:["Mash In","Mash Step(1)","Mash Step(2)","Mash Step(3)","Mash Step(4)","Mash Step(5)","Mash Step(6)","Mash Out","Boiling","Cooling","Whirlpool"],
-event:["","Temperature Reached",
-				"Add Malt",	
-				"Remove Malt",	
-				"Iodine Test",	
-				"Pause",
-				"Resume",
-				"Add Hop",
-				"Pwm On",
-				"Pwm Off",
-				"Boil Finished",
-				"Brew Finished!"],
-
-};
-var Beep= new Audio(
-	"data:audio/wav;base64,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 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU="
-	);
-var ButtonLabels={
-0:{u:"",d:"",s:"Quit",e:"Go",i:""},
-1:{u:"",d:"",s:"",e:"Ok",i:""},
-2:{u:"",d:"",s:"Edit",e:"Ok",i:""},
-3:{u:"UP",d:"DOWN",s:">>",e:"",i:""},
-4:{u:"UP",d:"DOWN",s:"Done",e:"",i:""},
-5:{u:"",d:"",s:"No",e:"Yes",i:""},
-6:{u:"",d:"Manual",s:"Auto",e:"Setup",i:""},
-7:{u:"",d:"",s:"",e:"",i:"Pump Rest"},
-8:{u:"",d:"",s:"Yes",e:"",i:"Continue:"},
-9:{u:"",d:"",s:"Yes",e:"No",i:"Continue:"},
-10:{u:"",d:"",s:"",e:"Pump",i:""},
-11:{u:"",d:"",s:"Time",e:"Pump",i:""},
-12:{u:"UP",d:"Down",s:"",e:"Pump",i:""},
-13:{u:"UP",d:"Down",s:"",e:"",i:""},
-14:{u:"",d:"",s:"Exit",e:"",i:""},
-15:{u:"",d:"",s:"Ok",e:"",i:""},
-16:{u:"UP",d:"Down",s:"End",e:"Pump",i:""},
-17:{u:"UP",d:"Down",s:"Heat",e:"Pump",i:""},
-18:{u:"UP",d:"Down",s:"Pause",e:"STP",i:""},
-19:{u:"UP",d:"Down",s:"Pump Pause",e:"STP",i:""},
-20:{u:"UP",d:"Down",s:"Pause",e:"",i:""},
-21:{u:"UP",d:"Down",s:"Skip",e:"Ok",i:""},
-22:{u:"UP",d:"Down",s:"",e:"Ok",i:""},
-23:{u:"UP",d:"Down",s:"Quit",e:"Ok",i:""},
-24:{u:"",d:"Down",s:"Quit",e:"Ok",i:""},
-25:{u:"UP",d:"",s:"Quit",e:"Ok",i:""},
-26:{u:"UP",d:"Down",s:"Pause",e:"Pump",i:""},
-27:{u:"UP",d:"Down",s:"RUN",e:"Pump",i:""},
-28:{u:"UP",d:"Down",s:"Done",e:"More",i:""}};
-
-$(function(){
-	$(".fn").hide();
-	var mySlidebars = new $.slidebars();
-	
-//	$("a").button().click(function(){mySlidebars.slidebars.toggle('left');});
-	$("#menu").selectable({
-		element: null,
-	
-		selected:function(event,ui){
-			element = $(ui.selected);
-		},
-		stop: function(event, ui) {
-        element.siblings().removeClass("selected");
-        $(".fn").hide();
-        $('#' + element[0].id + '-p').show();
-        
-		$("#menupane").hide('slide');
-      }});
-      $("#status").addClass('ui-selected');
-	$("#menupane").hide();	
-	$("#status-p").show();
-
-	BM.init();
-});
-</script>
+<meta charset=utf-8 name=viewport content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BrewManiac</title>
+<link rel=stylesheet href=lib.css>
+<script type=text/javascript src=lib.js></script>
+<script type=text/javascript src=bm.js></script>
+<style>body{text-align:center}#sb-site{background-color:#c0c0c0}.navicon-line{width:24px;height:4px;border-radius:1px;margin-bottom:3px;background-color:#fff}.top-bar-block{display:inline-block;color:white;font-style:italic;font-family:Georgia,serif}#menubar{position:absolute;left:10px}#menu .ui-selecting{background:#feca40}#menu .ui-selected{background:#f39814;color:white}#menu{list-style-type:none;margin:0;padding:0;width:100%}#menu li{margin:3px;padding:.4em;font-size:1em;height:18px}#menupane{width:120px}#top-bar{background-color:#222}.setting-category{text-align:center;font-weight:bold;font-size:1.2em;background-color:yellow}#status-p,#settings-p,#automation-p,#sensors-p,#about-p,#top-bar{margin:auto;padding:10px;width:100%}#about-p{text-align:left}ul{text-align:left}.tmp_unit{font-family:Tahoma,Geneva,sans-serif}.editbtn{height:20px}.section{font-size:18px;font-weight:bold}table{border-collapse:collapse}table,tr,td,th{margin:auto;border:1px solid black}#auto-t tr,#auto-t td,#auto-t th{border:0;font-weight:bold}#auto-p td{text-align:left}.running{font-size:1.2em;color:red;background-color:yellow}.run{color:#ddd;font-weight:normal}.panel{border-style:groove;text-align:right;padding:4px;margin-left:4px;margin-right:4px;margin-top:2px;margin-bottom:2px}.label{font-family:"Courier New",Courier,monospace;font-size:12px;color:white}.NUM{font-family:"Arial Black",Gadget,sans-serif;color:#c00;border-style:ridge;padding:2px;margin:2px;background-color:#212121}#timerPanel{height:46px;width:90px}#timer{height:24px;width:80px;font-size:12pt}.temperature{display:inline-block;font-size:12pt;width:64px;height;28px;white-space:nowrap;color:#c00}.tmp_unit{font-family:Tahoma,Geneva,sans-serif}#maintemp hr{margin:2px}#maintemp{width:120px}#setpoint{color:#c8f442}#auxT{display:none}#pwmPanel{width:90px}#pwm{font-size:10pt;width:26px;height:16px;display:inline-block}.ledreddim{background:#5b0000}.ledgreendim{background:#01290c}.round-led-circle{width:23px;height:0;padding-bottom:23px;border-radius:50%;border-style:outset;overflow:hidden;display:inline-block}span.round-led{width:12px;height:12px;display:table-cell;text-align:center;vertical-align:middle;font-weight:bold;text-decoration:none}a{-webkit-user-select:none;-webkit-touch-callout:none}#status-p table,#status-p tr,#status-p td{border:0;margin:0}#ctrlpanel{width:fit-content;margin-left:auto;margin-right:auto}#btnpanel{width:fit-content;height:fit-content;position:relative}#btnpanel td{width:25%}#btngap{height:5px}#btncover{position:absolute;left:0;top:0;width:100%;height:100%;z-index:1000;background-color:#FFF;border-radius:0 0 6px 6px;opacity:.6}.round-button-circle{width:52px;height:0;padding-bottom:52px;border-radius:50%;border-style:groove;overflow:hidden;background:#a22;margin:2px}a.round-button{width:52px;height:52px;display:table-cell;text-align:center;vertical-align:middle;color:#ccc;font-weight:bold;text-decoration:none;font-size:8pt}#info{text-align:center;color:blue;font-family:"Courier New",Courier,monospace;background-color:darkgrey;height:16px}#title{text-align:center;color:white;font-family:"Courier New",Courier,monospace;height:1.1em}#tline{margin-top:0}#auto-p table,#auto-p tr{margin-top:10px;margin-left:auto;margin-right:auto;border:2px;border-style:groove}#sensors{display:none;}</style>
+<script>var STR={AddMalt:"Add Malt",RemoveMalt:"Remove Malt",Boil:"Boil",HopN:"Hop#",Cooling:"Cooling",Automation:"Automation",PIDAutoTune:"PID AutoTune",Idle:"BrewManiacEx 0.3a",ManualMode:"Manual Mode",Setup:"Setup",Unknown:"Error!!",Pause:"PAUSED",min:"min",Mash:"Mash Step",Connected:"Connected",ConnectionError:"Connection Error",StartBrew:"Brewing started.",BoilEnd:"Boil Finished",stageName:["Mash In","Mash Step(1)","Mash Step(2)","Mash Step(3)","Mash Step(4)","Mash Step(5)","Mash Step(6)","Mash Out","Boiling","Cooling","Whirlpool"],event:["","Temperature Reached","Add Malt","Remove Malt","Iodine Test","Pause","Resume","Add Hop","Pwm On","Pwm Off","Boil Finished","Brew Finished!"],};var Beep=new Audio("data:audio/mp3;base64,//NAxAAUApbIAU8oAH79+/fv38e8R48ePHjx48V7POwFsFsE0FwQgXUTD4fOc7/////xMBwDAMDhwOBwhP/////6CAcAMAw+f//////U4mHA4HAwsPu//8QA+D4fHht4jDvjUFvjqAj/80LECxZ71ugBh5gAwBEk1DLYUYUQT6J9Mi8l+tv/6kv/RLoYkIeijw5cmPhyhD//q///SLAsSSX/GoRBv+ofQqm//RNyRX/+41zX/+43Tf9f6yM///yP///yGP//UkZG5DQFgCBggAj/80DEDRcbXrwB1aAAGthABhEBDTIqXjMnUf/+r//9FkhXgy0BuyIWijNDHF42//+t///5kbjGgZcaG2lWl//+cb//51FExHNAwwYWUVn///nTb///OF4AkGMyatW7Hxsga9QQhdYtoP/zQsQLFltalAAFqr2lqKX//LH//9nPD0BkoBAGljrBAA0yX//8f3///WcI8UoBrIPBpRVSb//8XRr//6hfGKRsQUDOofDSSsz///i7J63//skakGAyYGg0oqrKs54bYGvQEIaeVE01LP/zQMQNFlNalAAFqr2n//yx///djccAGSkEAaAOQCQDDqv//j+3//1qMx0C/A1iIgusVmf//8XRv//6xfnFsQcDOgfDSy07f//i7JBTf//Y3IIBk0NBpBXA6rsfHYBrzDcGmFc0QWom//NCxA4XO1qUAAWqvT//lh///2TLgucDJAG8LljlgLgLQX//8fy1//9SZgOsMvAagNob2edv//xuD3//6hnE2TFcAy+ZA4wroP//+NUVBTf//WYCvgYyLIg8uBmzmg4wNdgrw0sqG6al//NAxA0XM1qUAAWqvZF//+WH///TQL4hIBkPFUGFByAAAEJq//+SpLf//WgZjkBaKBn9QCDDdv//5HDD//9ZDzRzgkYGMkaJ3Liav//yiIspv//Wo6KYASchyDOluxuMwBrlHQGkFc3/80LECxcDXpQABaq8EFqIJ//ywf///QTLgjsDHkN8N/IGBgFAKaP//8lSE///TMCBg2eAycxRZZgv//+ZCr//+Wj6JRESCKaH46pf//5QECq//+kiZChQMOmkTqZLs5oM2Bp+HyHbKib/80DECxaDXpgABaq8mpZB//+WD///60DMTYBizHEIAEAAGAYbt//86Qn//6CZMA2JAwKth8GKv//6Yxf//k0apGQoUDFJ5Fwl5H//+PgYKn//+kiOUBjgYB9jV9kxzAPvtoUQ3QUtRP/zQsQMFHteoAAFarxD//nD///6lmAtYGZF+LjL4DQDPP//9ZLf//2NwxkBg9CkBSR///lkhf//WRqSKI5QGNh0J+NX///j8Vb///Zy0ChaE0Ps3QIGB9R8ijmia6yJ//84f///WozFCP/zQMQWFCteoAAFaLwGQWYOYXALAQ+3//1Et///dEN9A3HYXEapf//yVJL//1D8tJInQOKLExPs///4/G9///0CHgaJGKOaPdkxyAPkxYUQ3QVURD//qP///qWcFPAwk1SBm4LAs8////NCxCAUM1agAAVovf84S3//9ZkI2A6t0T6bIv//+Spt//6x/UtifA4gsTM87f//koPa3//+o6PgDDviCFnTMBZ4H/LCI3NE01LHf//1H///1qOiVAYCexKGgOCJ9v//lglv//6iyKoD//NAxCsUU1acAAVovfUAPsapN//+P6H//qHwnTHIA4cYRobof//ykMVf//6zgvQCaJAaVdBMYwD1tKE+G6Cqh2f/9R///+s4KaBjNokVcEQKPP//8sFr//9SygQcAfGJibN///JUqf//80LENBODVqAABWi9/ybZ1DXAzFccaC///6YxV///qRHUBmlwsQvTMBjwPOWMWM0TXWO///qP///1HRagMsMQgyIDQFNm//+WD3//60CmPoD2GRNTz///yyQn//zzomIugjgJRav//5H/80DEQhPDXqAABWi849Lb//7JE6BqwYmJ9tAzFcA+PshPhugg6hbP//Lf//9ZkLSBo9mjInADgUav//8lG///UmQwQqB8awkh9v//50b3//yaNUjIWkDQ5xcKSP//8bpJW//+6BFwNv/zQsROFKNanAAFaL1FRDzRZdMwE9gew5Yn80TTZYt///lv//+kYjHAasWAox0AYAmzf//JT//+mgTYZaA6n0WND///QG9//6x8pImI5QHCjCNjVL//+N00t//9RmM4BnYAsBugrQMxCP/zQMRXFLtenAAFaLwAzqomE4F9BBNAUT//rLf//9FIWaBjjFKIFKAAIAjVL//5KH///0EyYBsdAxurBmFq///lAb3//qGsikbEFAzGFw3krM///41RsKb//1LOC7AoYyPOLqkygHFg//NCxF8Wc16YAAWqvGfhSIgGXE00ExD//+st///s5qLmAyNCEDKkPAIAWZI///H4l///00CLgKAYBDXHyZIq///H4bP//rF+cWxBwM6B8NLLTt//+Romim//9FIxFDAYiMgj4upV/6b///NAxGEXW16UAAWqvFucKiwvWBg8JgaNYgGEgoAwCB2FAZQiBUQ//7///QWZikxBMCYsMEDoF0TBp//9T///zBEdgEFA3BwGjJ///OI//+gYIGhTHPAxowSgVGX///LX//9ZfJsA4GP/80LEXhfjWrgBVaAAQTUuaegq38lhlQIP4miMbCVfg20AIogS0COhxiyeKMKUWYoE1ycOp1Jf6B0n9TmPyyIDgodDCpTK61k6M8TRWMf90HV0D62/X/yYH0FwpWLh9BmU+gXjJbLq////80DEWh0zNswBj6AA6CyfDFokk0Wndb+5iYsZKf////JsT6RP/lRVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRAAAADSAHAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==");var ButtonLabels={0:{u:"",d:"",s:"Quit",e:"Go",i:""},1:{u:"",d:"",s:"",e:"Ok",i:""},2:{u:"",d:"",s:"Edit",e:"Ok",i:""},3:{u:"UP",d:"DOWN",s:">>",e:"",i:""},4:{u:"UP",d:"DOWN",s:"Done",e:"",i:""},5:{u:"",d:"",s:"No",e:"Yes",i:""},6:{u:"",d:"Manual",s:"Auto",e:"Setup",i:""},7:{u:"",d:"",s:"",e:"",i:"Pump Rest"},8:{u:"",d:"",s:"Yes",e:"",i:"Continue?"},9:{u:"",d:"",s:"Yes",e:"No",i:"Continue?"},10:{u:"",d:"",s:"",e:"Pump",i:""},11:{u:"",d:"",s:"Time",e:"Pump",i:""},12:{u:"UP",d:"Down",s:"",e:"Pump",i:""},13:{u:"UP",d:"Down",s:"",e:"",i:""},14:{u:"",d:"",s:"Exit",e:"",i:""},15:{u:"",d:"",s:"Ok",e:"",i:""},16:{u:"UP",d:"Down",s:"End",e:"Pump",i:""},17:{u:"UP",d:"Down",s:"Heat",e:"Pump",i:""},18:{u:"UP",d:"Down",s:"Pause",e:"STP",i:""},19:{u:"UP",d:"Down",s:"Pump Pause",e:"STP",i:""},20:{u:"UP",d:"Down",s:"Pause",e:"",i:""},21:{u:"UP",d:"Down",s:"Skip",e:"Ok",i:""},22:{u:"UP",d:"Down",s:"",e:"Ok",i:""},23:{u:"UP",d:"Down",s:"Quit",e:"Ok",i:""},24:{u:"",d:"Down",s:"Quit",e:"Ok",i:""},25:{u:"UP",d:"",s:"Quit",e:"Ok",i:""},26:{u:"UP",d:"Down",s:"Pause",e:"Pump",i:""},27:{u:"UP",d:"Down",s:"RUN",e:"Pump",i:""},28:{u:"UP",d:"Down",s:"Done",e:"More",i:""},29:{u:"UP",d:"",s:"",e:"OK",i:""},30:{u:"",d:"Down",s:"",e:"OK",i:""},31:{u:"",d:"",s:"Exit",e:"Pump",i:""},32:{u:"",d:"",s:"No",e:"Yes",i:"Auto Tune PID?"},33:{u:"",d:"",s:"No",e:"Yes",i:"Stop AutoTune?"}};$(function(){$(".fn").hide();var a=new $.slidebars();$("#menu").selectable({element:null,selected:function(b,c){element=$(c.selected)},stop:function(b,c){element.siblings().removeClass("selected");$(".fn").hide();$("#"+element[0].id+"-p").show();$("#menupane").hide("slide")}});$("#status").addClass("ui-selected");$("#menupane").hide();$("#status-p").show();BM.init()});</script>
 </head>
 <body>
-<div class="sb-slidebar sb-left sb-width-custom" data-sb-width="160px">
-<ol id="menu">
-  <li class="ui-widget-content" id="status">Status</li>
-  <li class="ui-widget-content" id="settings">Settings</li>
-  <li class="ui-widget-content" id="automation">Automation</li>
-  <li class="ui-widget-content" id="about">About</li>
+<div class="sb-slidebar sb-left sb-width-custom" data-sb-width=160px>
+<ol id=menu>
+<li class=ui-widget-content id=status>Panel</li>
+<li class=ui-widget-content id=settings>Settings</li>
+<li class=ui-widget-content id=automation>Automation</li>
+<li class=ui-widget-content id=sensors>Sensors</li>
+<li class=ui-widget-content id=about>About</li>
 </ol>
 </div>
-<div id="sb-site">
-<div id="top-bar">
-	<div class="sb-toggle-left top-bar-block" id="menubar">
-		<div class="navicon-line"></div>
-		<div class="navicon-line"></div>
-		<div class="navicon-line"></div>
-	</div>
-	<div class="top-bar-block"> BrewManiac</div>
+<div id=sb-site>
+<div id=top-bar>
+<div class="sb-toggle-left top-bar-block" id=menubar>
+<div class=navicon-line></div>
+<div class=navicon-line></div>
+<div class=navicon-line></div>
 </div>
-
-<div class="fn" id="status-p">
-
-<table id="tbstatus">
-<tr><td colspan="2"><div id="srmc"><div id="srm"></div><div>SRM:<span id="srmv"></span></div></div></td></tr>
-<tr><td colspan="2">
-<div id="bmicon">
-<img src="bm.png" id="malt"  class="bmicons">
-<img src="bm.png" id="bmbase"  class="bmicons">
-<img src="bm.png" id="pumprun"  class="bmicons">
-<img src="bm.png" id="pump_inact" class="bmicons">
-<img src="bm.png" id="heating" class="bmicons">
-<img src="bm.png" id="heater_inact" class="bmicons">
-<img src="bm.png" id="settingstate" class="bmicons">
-<img src="bm.png" id="errorstate" class="bmicons">
-
-<div id="TTT"><span id="ctemp">0.0</span><span class="tmp_unit">°C</span></div>
+<div class=top-bar-block> BrewManiac</div>
+</div>
+<div class=fn id=status-p>
+<div id=ctrlpanel class=panel>
+<table>
+<tr><td colspan=3>
+<div id=title>BrewManiacEx 0.3a</div>
+<hr id=tline>
+</td></tr>
+<tr>
+<td rowspan=3>
+<div id=maintemp class=panel>
+<div class=Tcon><span class="label TID">T:</span><span id=currenttemp class="temperature NUM">100.75</span><span class="tmp_unit label">°C</span></div>
+<hr id=currenttempend>
+<span class=label>SP</span><span id=setpoint class="temperature NUM">64.75</span><span class="tmp_unit label">°C</span>
+</div>
+</td>
+<td>
+<div id=heatled class="round-led-circle ledreddim"><span class=round-led></span></div>
+<div class=label>HEAT</div>
+</td>
+<td>
+<div id=pumpled class="round-led-circle ledgreendim"><span class=round-led></span></div>
+<div class=label>PUMP</div>
+</td>
+</tr>
+<tr>
+<td colspan=2>
+<div id=pwmPanel class=panel>
+<span class=label>PWM</span>
+<span id=pwm class=NUM>99</span>
+<span class=label>%</span>
+</div>
+</td>
+</tr>
+<tr>
+<td colspan=2>
+<div id=timerPanel class=panel>
+<div id=timer class=NUM>01:59:38</div>
+<div class=label>Time</div>
+</div>
+</td>
+</tr>
+<tr><td colspan=3><div id=info class=panel></div></td></tr>
+<tr><td colspan=3>
+<div id=btnpanel>
+<table><tr><td id=btngap colspan=4></td></tr><tr>
+<td><div class=round-button-circle><a id=btn-up class=round-button>Up</a></div></td>
+<td><div class=round-button-circle><a id=btn-down class=round-button>Down</a></div></td>
+<td><div class=round-button-circle><a id=btn-start class=round-button>Start</a></div></td>
+<td><div class=round-button-circle><a id=btn-enter class=round-button>Enter</a></div></td>
+</tr></table>
+<div id=btncover></div>
 </div>
 </td></tr>
-<tr><td>Set  </td><td style="text-align:left;"><span id="stemp">99.9</span><span class="tmp_unit">°C</span></td></tr>
-<tr><td>Time  </td><td style="text-align:left;"><span id="stime">-</span></td></tr>
-<tr id="pwmcontainer"><td>PWM</td><td style="text-align:left;"><span id="pwmvalue"></span>%</td></tr>
-<tr><td colspan="2" style="text-align:right;"><button id="showbtn" style="border:0px;"></button></td></tr>
 </table>
-<div id="bpannel">
+</div>
+<div id=auto-p><table id=auto-t></table></div></p>
+</div>
+<div class=fn id=settings-p>
+<span class=section>Settings</span>
+<button id=esetting class=editbtn>Set</button>
+<button id=savesetting class=editbtn>Save</button>
 <table>
-<tr><td colspan="4" style="text-align:left;"><button id="btn-home" style="border:0px;"></button></td></tr>
-<tr id="btn-hint"><td colspan="4" style="text-align:center;height:32px;"></td></tr>
-<tr><td class="btntd"><div class="round-button-circle"><a class="round-button" id="btn-up">Up</a></div></td>
-<td class="btntd"><div class="round-button-circle"><a class="round-button" id="btn-down">Down</a></div></td>
-<td class="btntd"><div class="round-button-circle"><a class="round-button" id="btn-start">Start</a></div></td>
-<td class="btntd"><div class="round-button-circle"><a class="round-button" id="btn-enter">Enter</a></div></td>
-</tr>
+<tr><td colspan=2 class=setting-category>PID — PWM</td></tr>
+<tr><td>Constant kP </td><td><span id=s_kp>-</span> </td></tr>
+<tr><td>Constant kI </td><td><span id=s_ki>-</span> </td></tr>
+<tr><td>Constant kD </td><td><span id=s_kd>-</span> </td></tr>
+<tr><td>Sample Time </td><td><span id=s_sample_time>-</span> </td></tr>
+<tr><td>WindowSet </td><td><span id=s_window>-</span> ms</td></tr>
+<tr><td>Heat/PWM in Boil </td><td><span id=s_pwm>-</span> %</td></tr>
+<tr><td class=TCAL_T>Sensor Calibration </td><td><span id=s_cal class=TCAL_V>-</span><span class=tmp_unit>°C</span></td></tr>
+<tr><td colspan=2 class=setting-category>Unit Parameters</td></tr>
+<tr><td>Temperature Unit</td><td><span id=s_unit class=tmp_unit>°C</span></td></tr>
+<tr><td>Sensor </td><td><span id=s_sensor>-</span></td></tr>
+<tr><td>Boil Temperature</td><td><span id=s_boil>-</span> <span class=tmp_unit>°C</span></td></tr>
+<tr><td>Pump Cycle </td><td><span id=s_pumpcycle>-</span> minutes</td></tr>
+<tr><td>Pump Rest </td><td><span id=s_pumprest>-</span> minutes</td></tr>
+<tr><td>Pump PreMash </td><td><span class=onoff id=s_pumppremash>-</span></td></tr>
+<tr><td>Pump on Mash </td><td><span class=onoff id=s_pumpmash>-</span></td></tr>
+<tr><td>Pump MashOut </td><td><span class=onoff id=s_pumpmashout>-</span> </td></tr>
+<tr><td>Pump on Boil </td><td><span class=onoff id=s_pumpboil>-</span></td></tr>
+<tr><td>Pump Stop Temperature</td><td><span id=s_pumpstop>-</span><span class=tmp_unit>°C</span></td></tr>
+<tr><td>PID Pipe </td><td><span id=s_pipe>-</span></td></tr>
+<tr><td>Skip Add </td><td><span class=yesno id=s_skipadd>-</span></td></tr>
+<tr><td>Skip Remove </td><td><span class=yesno id=s_skipremove>-</span></td></tr>
+<tr><td>Skip Iodine </td><td><span class=yesno id=s_skipiodine>-</span></td></tr>
+<tr><td>Iodine Time </td><td><span id=s_iodine>-</span></td></tr>
+<tr><td>Whirlpool</td><td><span id=s_whirlpool>-</span></td></tr>
 </table>
 </div>
-<div id="info">for information</div>
-<p>
-<div id="auto-p"><table id="auto-t">
-</table></div>
-</p>
-<div id="d_debug"></div>
-</div>
-<div  class="fn"  id="settings-p">
-<span class="section">Settings</span>
-<button id="esetting" class="editbtn">Set</button>
-<button id="savesetting" class="editbtn">Save</button>
-	<table>
-	<tr><td colspan="2" class="setting-category">PID — PWM</td></tr>
-  	<tr><td>Constant kP </td><td><span id="s_kp">-</span> </td></tr>
-  	<tr><td>Constant kI </td><td><span id="s_ki">-</span> </td></tr>
-  	<tr><td>Constant kD </td><td><span id="s_kd">-</span> </td></tr>
-  	<tr><td>Sample Time  </td><td><span id="s_sample_time">-</span> </td></tr>
-  	<tr><td>WindowSet </td><td><span id="s_window">-</span> ms</td></tr>
-    <tr><td>Heat/PWM in Boil </td><td><span id="s_pwm">-</span> %</td></tr>
-    <tr><td>Temperature Calibration </td><td><span id="s_cal">-</span><span class="tmp_unit">°C</span></td></tr>
-	<tr><td colspan="2" class="setting-category">Unit Parameters</td></tr>
-    <tr><td>Temperature Unit</td><td><span id="s_unit" class="tmp_unit">°C</span></td></tr>
-    <tr><td>Sensor </td><td><span id="s_sensor">-</span></td></tr>
-    <tr><td>Boil Temperature</td><td><span id="s_boil">-</span> <span class="tmp_unit">°C</span></td></tr>
-    <tr><td>Pump Cycle </td><td><span id="s_pumpcycle">-</span> minutes</td></tr>
-    <tr><td>Pump Rest </td><td><span id="s_pumprest">-</span> minutes</td></tr>
-    <tr><td>Pump PreMash </td><td><span class="onoff" id="s_pumppremash">-</span></td></tr>
-    <tr><td>Pump on Mash </td><td><span class="onoff" id="s_pumpmash">-</span></td></tr>
-    <tr><td>Pump MashOut </td><td><span class="onoff" id="s_pumpmashout">-</span> </td></tr>
-    <tr><td>Pump on Boil </td><td><span class="onoff" id="s_pumpboil">-</span></td></tr>
-    <tr><td>Pump Stop Temperature</td><td><span id="s_pumpstop">-</span><span class="tmp_unit">°C</span></td></tr>
-    <tr><td>PID Pipe </td><td><span id="s_pipe">-</span></td></tr>
-    <tr><td>Skip Add </td><td><span class="yesno" id="s_skipadd">-</span></td></tr>
-    <tr><td>Skip Remove </td><td><span  class="yesno" id="s_skipremove">-</span></td></tr>
-    <tr><td>Skip Iodine </td><td><span  class="yesno" id="s_skipiodine">-</span></td></tr>
-    <tr><td>Iodine Time </td><td><span id="s_iodine">-</span></td></tr>
-    <tr><td>Whirlpool</td><td><span id="s_whirlpool">-</span></td></tr>
-	</table>
-</div>
-<div class="fn" id="automation-p">
+<div class=fn id=automation-p>
 <em>Automation</em>
-<button id="editauto" class="editbtn">Edit</button>
-<button id="saveauto" class="editbtn">Save</button>
-<table id="auto_table">
-<tr><td colspan="3"  class="setting-category">Mash Schedule <button id="addrest" class="editbtn">Add Mash Rest</button></td></tr>
+<button id=editauto class=editbtn>Edit</button>
+<button id=saveauto class=editbtn>Save</button>
+<table id=auto_table>
+<tr><td colspan=3 class=setting-category>Mash Schedule <button id=addrest class=editbtn>Add Mash Rest</button></td></tr>
 <tr><th> Rest</th><th>Temperature</th><th>Time</th></tr>
-<tr><td> Mash In </td><td><span id="s0_tp">-</span><span class="tmp_unit">°C</span></td><td>-</td></tr>
-<tr><td> Mash Out </td><td><span id="s7_tp">-</span><span class="tmp_unit">°C</span></td><td><span id="s7_tm">-</span> min</td></tr>
+<tr><td> Mash In </td><td><span id=s0_tp>-</span><span class=tmp_unit>°C</span></td><td>-</td></tr>
+<tr><td> Mash Out </td><td><span id=s7_tp>-</span><span class=tmp_unit>°C</span></td><td><span id=s7_tm>-</span> min</td></tr>
 <tr>
-<tr><td colspan="3"  class="setting-category">Boil & Hop <button id="addhop" class="editbtn">Add Hop</button></td></tr>
-<tr><td> Boil Time</td><td colspan="2"><span id="boiltime">-</span> min</td></tr>
+<tr><td colspan=3 class=setting-category>Boil & Hop <button id=addhop class=editbtn>Add Hop</button></td></tr>
+<tr><td> Boil Time</td><td colspan=2><span id=boiltime>-</span> min</td></tr>
 </table>
 </div>
-<div class="fn" id="about-p">
-<p>
-By Vito Tai. <a href="http://vito.tw/category/brewmaniac/" target="_blank">web</a></p>
-<p style="{text-align:left;}">Powered by</p>
-<ul> 
-<li><a href="http://jquery.com" target="_blank">jQuery</a></li>
-<li><a href="http://plugins.adchsm.me/slidebars/" target="_blank">Slidebars by Adam Smith</a></li>
-<li><a href="http://olance.github.io/jQuery-switchButton/" target="_blank">jQuery UI iPhone-like Switch Button by Olivier Lance</a></li>
+<div class=fn id=sensors-p>
+<div id=multisensor>
+<table>
+<tr><th>#</th><th>Address</th></tr>
+<tr class=sensor_row><td class=sensor_id>1</td><td class=sensor_addr>0xFFFFFFFFFFFFFFFF</td></tr>
+</table>
+<br>
+Sensor Assignment:
+<table>
+<tr><th>Stage</th><th>Primary</th><th>Auxiliary</th></tr>
+<tr><td>Main Screen</td><td id=sensor_P_0>1</td><td id=sensor_S_0>1</td></tr>
+<tr><td>Manual Mode</td><td id=sensor_P_1>1</td><td id=sensor_S_1>1</td></tr>
+<tr><td>Pre-Mash</td><td id=sensor_P_2>1</td><td id=sensor_S_2>1</td></tr>
+<tr><td>Mashing</td><td id=sensor_P_3>1</td><td id=sensor_S_3>1</td></tr>
+<tr><td>Boil</td><td id=sensor_P_4>1</td><td id=sensor_S_4>1</td></tr>
+<tr><td>Cooling</td><td id=sensor_P_5>1</td><td id=sensor_S_5>1</td></tr>
+</table>
+</div>
+</div>
+<div class=fn id=about-p>
+<p>By Vito Tai. <a href=http://vito.tw/category/brewmaniac/ target=_blank>web</a></p>
+<p style={text-align:left;}>Powered by</p>
+<ul>
+<li><a href=http://jquery.com target=_blank>jQuery</a></li>
+<li><a href=http://plugins.adchsm.me/slidebars/ target=_blank>Slidebars by Adam Smith</a></li>
+<li><a href=http://olance.github.io/jQuery-switchButton/ target=_blank>jQuery UI iPhone-like Switch Button by Olivier Lance</a></li>
 </ul>
 </div>
 </div>
-<!-- Dialogs -->
-<div id="d_addmalt" title="Add Malt">
- <p>Add Malt.</p>
+<div id=d_ConnectionError title=Error!>
+<p>The connection to BrewManiac is down. It might be wireless issue or ESP8266 issue. Check your Brew ASAP.</p>
 </div>
-
-<div id="d_removemalt" title="Remove Malt">
- <p>Remove Malt.</p>
+<div id=d_SerialError title=Error!>
+<p>The connection between Arduino and ESP8266 is disconnected. Either Arduino or the physical connection has problems. Check ASAP.</p>
 </div>
-
-<div id="d_addhop" title="Add Hop">
- <p>Add Hop!</p>
-</div>
-
-<div id="d_ConnectionError" title="Error!">
- <p>The connection to BrewManiac is down. It might be wireless issue or ESP8266 issue. Check your Brew ASAP.</p>
-</div>
-<div id="d_SerialError" title="Error!">
- <p>The connection between Arduino and ESP8266 is disconnected. Either Arduino or the physical connection has problems. Check ASAP.</p>
-</div>
-
-<div id="d_warning" title="Warning!" class="no-close">
+<div id=d_warning title=Warning! class=no-close>
 <ul>
 <li>Never leave your brew unattended!</li>
 <li>Wireless connection may be unstable, and the status may be out of sync.</li>
 <li>Use at your won risk.</li>
 </ul>
-<label><input type="checkbox" id="nshow"> Don't show this again. </label>
+<label><input type=checkbox id=nshow> Don't show this again. </label>
 </div>
-
-<div id="d_home_confirm" title="Note:">
- <p>Do you Really want to END current job and go back to Main screen?</p>
+<div id=d_home_confirm title=Note:>
+<p>Do you Really want to END current job and go back to Main screen?</p>
 </div>
-
 </body>
 </html>
