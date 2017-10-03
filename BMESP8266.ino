@@ -384,6 +384,7 @@ void setup(void){
 	MDNS.addService("http", "tcp", 80);
 	
 	// 5. try to connnect Arduino
+	bmWeb.setIp(WiFi.localIP());
   	bmWeb.onEvent(bmwEventHandler);
 	bmWeb.connectTarget();
 	

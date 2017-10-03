@@ -216,7 +216,7 @@ private:
 	void _sendFrame(int len,bool requestAck);
 	void sendPersistenceBlockRead(void);
 	void sendConnectRequest(void);
-	
+	void sendIpAddress(void);
 	void sendQueryRecipe(void);
 	//message handler
 	void handleConnectionConfirm(void);
@@ -242,6 +242,7 @@ private:
 	byte _messageCode;
 	unsigned long _lastRcvTime;
 	
+	byte _ipAddress[4];
 };
 
 #endif

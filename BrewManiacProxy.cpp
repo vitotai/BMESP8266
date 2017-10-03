@@ -59,6 +59,7 @@ void WIFI2_hex(unsigned char b)
 
 BrewManiacProxy::BrewManiacProxy(void)
 {
+	memset(_ipAddressip,0,4);
 	_l2Init();
 }
 
@@ -295,6 +296,7 @@ void BrewManiacProxy::handleRecipeInformation(void)
 	
 	if(_bmState == BMSGetRecipe){
 		_bmState=BMSConnected;
+		sendIpAddress();
 		#if LambdaSupported == true
 		if(_eventHandler) _eventHandler(BMNotifyConnected);
 		#else
@@ -640,11 +642,9 @@ void BrewManiacProxy::sendAutomationRecipe(AutomationRecipe *recipe)
 	_sendFrame(idx,true);
 }
 
-
-
-void BrewManiacProxy::setIp(byte ip[])
+void BrewManiacProxy::sendIpAddress(void)
 {
-	if(ip ==0 || (ip[0] == 0 && ip[1]==0 && ip[2] ==0  && ip[3] ==0))
+	if(_ipAddressip[0] == 0 && _ipAddress[1]==0 && _ipAddress[2] ==0  && _ipAddress[3] ==0)
 	{
 		_txBuffer[0]=OnePDU(WiDeviceAddress);
 		_txBuffer[1]= 0; // clear
@@ -657,10 +657,17 @@ void BrewManiacProxy::setIp(byte ip[])
 		_txBuffer[2] = 0x1; // type
 		byte idx=3;
 		for(int i=0;i < 4;i++){
-			_txBuffer[idx++]=ip[i];
+			_txBuffer[idx++]=_ipAddressip[i];
 		}
 		_sendFrame(idx,true);
 	}
+}
+
+void BrewManiacProxy::setIp(byte ip[])
+{
+	if(ip == NULL) memset(_ipAddressip,0,4);
+	else memcpy(_ipAddress,ip,4);
+	if(isConnected()) sendIpAddress();
 }
 
 
